@@ -1,0 +1,164 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+var app = require('../app');
+var debug = require('debug')('linesws:server');
+var http = require('http');
+//var https = require('https');
+var db = require('mongoose');
+var dbConf = require ('../config/db');
+const socket = require("socket.io");
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || '30000');
+app.set('port', port);
+app.set('hostname','localhost');
+
+/**
+ * connect to mongo cluster
+ *
+ */
+db.connect(dbConf.url,dbConf.options,function(error){
+  console.log(error);
+});
+
+
+/**
+ * Create HTTP server.
+ */
+/*
+const fs = require('fs')
+
+var server = https.createServer({
+  key: fs.readFileSync('/Users/mac/WebstormProjects/server.key'),
+  cert: fs.readFileSync('/Users/mac/WebstormProjects/server.cert')
+}, app);*/
+
+var server = http.createServer(app);
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
+
+const io = socket(server);
+io.on("connection", function (socket) {
+  console.log("Made socket connection");
+
+  //update user
+  socket.on("updateUser", function (data) {
+    console.log("User Updated");
+    io.emit("updateUser","")});
+
+  //update service
+  socket.on("updateService", function (data) {
+    console.log("Service Updated");
+    io.emit("updateService","")});
+
+  //update vendor
+  socket.on("updateVendor", function (data) {
+    console.log("Vendor Updated");
+    io.emit("updateVendor","")});
+
+  //update customer
+  socket.on("updateCustomer", function (data) {
+    console.log("Customer Updated");
+    io.emit("updateCustomer","")});
+
+  //update invoice
+  socket.on("updateInvoice", function (data) {
+    console.log("Invoice Updated");
+    io.emit("updateInvoice","")});
+
+  //update transaction
+  socket.on("updateTrx", function (data) {
+    console.log("Transaction Updated");
+    io.emit("updateTrx","")});
+
+  socket.on("updateApproval1", function (data) {
+    console.log("Approval 1 Updated");
+    io.emit("updateApproval1","")});
+
+  socket.on("updateApproval2", function (data) {
+    console.log("Approval 2 Updated");
+    io.emit("updateApproval2","")});
+
+  socket.on("updateSettlement", function (data) {
+    console.log("Settlement Updated");
+    io.emit("updateSettlement","")});
+
+  socket.on("updateInvoice", function (data) {
+    console.log("Invoice Updated");
+    io.emit("updateInvoice","")});
+
+  });
+
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug ('Listening on ' + bind);
+}
