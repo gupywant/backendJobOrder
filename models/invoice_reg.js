@@ -16,7 +16,7 @@ var InvoiceReg = new Schema({
         default: 0
     },
     settlement: {
-        type: Boolean
+        type: Boolean,
         default: false
     }
 }, {
