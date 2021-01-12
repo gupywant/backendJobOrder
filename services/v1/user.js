@@ -110,7 +110,6 @@ const updateUser = async (req, res, next) => {
             name,
             image,
             active,
-            password,
             role,
             department,
         } = req.body;
@@ -147,7 +146,6 @@ const updateUser = async (req, res, next) => {
             name: name,
             image:image,
             active:active,
-            password: Auth.encryptPassword(password),
             role:role,
             department:department,
         }
