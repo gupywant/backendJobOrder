@@ -7,6 +7,8 @@ let router = express.Router();
 router.post('/transaction',validateToken, transaction.create);
 router.post('/transaction/settlement',validateToken, transaction.settlementcreate);
 router.post('/transaction/image/:id',validateToken, transaction.uploadImage);
+router.get('/transaction/settled',validateToken, transaction.readSettled);
+router.get('/transaction/settled/:id',validateToken, transaction.readsettledid);
 router.get('/transaction/image/:id',validateToken, transaction.readImage);
 router.get('/transaction',validateToken, transaction.coderead);
 router.get('/transaction/accepted',validateToken, transaction.accepted);

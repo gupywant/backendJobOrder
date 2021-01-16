@@ -341,7 +341,6 @@ const remove = async (req,res,next) => {
         let id = req.params.id;
 
         let isExists = await Transaction.find({id_code: mongoose.Types.ObjectId(id)});
-        console.log(isExists)
         if (!isExists.length) {
             return res.status(404).json({
                 'code': 'BAD_REQUEST_ERROR',
@@ -349,25 +348,24 @@ const remove = async (req,res,next) => {
             });
         }
         //note to update
-        /*console.log(await TransactionCode.findOneAndUpdate(
+        const transaction = await TransactionCode.findOneAndUpdate(
                 {
-                    id_customer: mongoose.Types.ObjectId(id)
+                    _id: mongoose.Types.ObjectId(id)
                 },
                 {
-                    available: true,
-                    approval1: false,
-                    approval2: false
+                    approval1: false
                 },
                 {
                     new: true,
                     useFindAndModify: false
                 }
-            ))*/
-        await TransactionCode.remove({_id: mongoose.Types.ObjectId(id)})
-        let transaction = await Transaction.deleteMany({id_code: mongoose.Types.ObjectId(id)});
-        if (transaction) {
+            )
+        console.log(transaction.approval1 === false)
+        //await TransactionCode.remove({_id: mongoose.Types.ObjectId(id)})
+        //let transaction = await Transaction.deleteMany({id_code: mongoose.Types.ObjectId(id)});
+        if (transaction.approval1 === false) {
             return res.status(200).json({
-                'message': `Vendor with id ${id} deleted successfully`
+                'message': `Job order with id ${id} rejected successfully`
             });
         }
     }catch (error) {
@@ -670,6 +668,161 @@ const settlementcreate = async (req,res,next) => {
         });
     }
 }
+const readSettled = async (req,res,next) => {
+    try{
+        //const settlement = await TransactionSettlement.find(/*{id_code : mongoose.Types.ObjectId(req.params.id)}*/)
+        const settlement = await TransactionCode.aggregate([
+            {   "$match" : {
+                    cancel: false,
+                    settlement: true
+                }
+            },
+            { 
+                $lookup: 
+                    {
+                        from: 'customers',
+                        localField: 'id_customer',
+                        foreignField: '_id',
+                        as: 'customer_detail'
+                    }
+            },
+            {   $unwind:"$customer_detail" },
+            { 
+                $lookup: 
+                    {
+                        from: 'vendors',
+                        localField: 'id_vendor',
+                        foreignField: '_id',
+                        as: 'vendor_detail'
+                    }
+            },
+            {   $unwind:"$vendor_detail" },
+            {
+                $project:
+                    {
+                        total_amount: 1,
+                        settlement_amount: 1,
+                        id_transaction : 1,
+                        code: 1,
+                        id_customer: 1,
+                        customer_code : "$customer_detail.code",
+                        vendor_code : "$vendor_detail.code",
+                        approval1_date: 1,
+                        approval2_date: 1,
+                        settlement_date: 1,
+                        createdAt: 1,
+                        updatedAt: 1
+                    } 
+            }
+        ])
+        if(settlement.length > 0){
+            return res.status(200).json({
+                'message': 'Settled Job Order fetched successfully',
+                'data': settlement
+            });
+        }else{
+            return res.status(404).json({
+                'code': 'BAD_REQUEST_ERROR',
+                'description': 'No Settled Job Order found in the system'
+            });
+        }
+    }catch (error) {
+            console.log(error)
+            return res.status(500).json({
+                'code': 'SERVER_ERROR',
+                'description': 'something went wrong, Please try again'
+            });
+        }
+}
+const readsettledid = async (req,res,next) => {
+    try{
+        let transaction = await TransactionSettlement.aggregate([
+            {   "$match" : {
+                    id_code: mongoose.Types.ObjectId(req.params.id),
+                } 
+            },
+            { 
+                $lookup: 
+                    {
+                        from: 'services',
+                        localField: 'id_service',
+                        foreignField: '_id',
+                        as: 'service_detail'
+                    }
+            },
+            {   $unwind:"$service_detail" },
+            { 
+                $lookup:
+                    {
+                        from: 'vendors',
+                        localField: 'id_vendor',
+                        foreignField: '_id',
+                        as: 'vendor_detail'
+                    }
+            },
+            {   $unwind:"$vendor_detail" },
+            { 
+                $lookup:
+                    {
+                        from: 'transactioncodes',
+                        localField: 'id_code',
+                        foreignField: '_id',
+                        as: 'code_detail'
+                    }
+            },
+            {   $unwind:"$code_detail" },
+            { 
+                $lookup:
+                    {
+                        from: 'customers',
+                        localField: 'code_detail.id_customer',
+                        foreignField: '_id',
+                        as: 'customer_detail'
+                    }
+            },
+            {   $unwind:"$customer_detail" },
+            {   
+                $project:{  
+                    id_transaction : 1,
+                    qty: 1,
+                    total_amount: "$code_detail.total_amount",
+                    planned_amount: 1,
+                    customer_id : "$customer_detail._id",
+                    customer_email : "$customer_detail.email",
+                    customer_name : "$customer_detail.name",
+                    vendor_id : "$vendor_detail._id",
+                    vendor_name : "$vendor_detail.name",
+                    service_id : "$service_detail._id",
+                    service_name : "$service_detail.name",
+                    service_description : "$service_detail.description",
+                    customer_code: "$customer_detail.code",
+                    vendor_code: "$vendor_detail.code",
+                    service_code: "$service_detail.code",
+                    code : "$code_detail.code",
+                    createdAt: 1,
+                    updatedAt: 1
+                } 
+            }
+        ])
+        if (transaction.length > 0) {
+            return res.status(200).json({
+                'message': 'Transaction fetched successfully',
+                'data': transaction
+            });
+        }
+        console.log(transaction)
+        return res.status(404).json({
+            'code': 'BAD_REQUEST_ERROR',
+            'description': 'No transaction found in the system'
+        });
+    }catch (error) {
+        console.log(error)
+        return res.status(500).json({
+            'code': 'SERVER_ERROR',
+            'description': 'something went wrong, Please try again'
+        });
+    }
+}
 const accepted = async (req,res,next) => {
     try{
         let transactionCode = await TransactionCode.aggregate([
@@ -885,6 +1038,8 @@ module.exports = {
             cancel: cancel,
             readcancel: readcancel,
             settlementcreate: settlementcreate,
+            readSettled: readSettled,
+            readsettledid: readsettledid,
             accepted: accepted,
             invoiceaccepted: invoiceaccepted,
             uploadImage: uploadImage,
