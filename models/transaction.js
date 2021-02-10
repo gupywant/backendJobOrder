@@ -2,13 +2,10 @@ let mongoose = require('mongoose');
 let Schema = mongoose.Schema;
 
 var Transaction = new Schema({
-    id_code: {
+    id_transaction_vendor: {
         type: mongoose.Schema.ObjectId
     },
     id_service: {
-        type: mongoose.Schema.ObjectId
-    },
-    id_vendor: {
         type: mongoose.Schema.ObjectId
     },
     qty: {

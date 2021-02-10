@@ -37,7 +37,12 @@ const create = async (req,res,next) => {
 		if(type === 1){
 			await code.map(async (item) => {
 				if(item.select){
-					await InvoiceReg.create({id_invoice: mongoose.Types.ObjectId(invoice._id), id_code: mongoose.Types.ObjectId(item._id), po_ref: item.ref, total_amount: item.settlement_amount})
+					await InvoiceReg.create({
+						id_invoice: mongoose.Types.ObjectId(invoice._id),
+						id_code: mongoose.Types.ObjectId(item._id),
+						po_ref: item.ref,
+						total_amount: item.settlement_amount
+					})
 					total_amount += await (parseInt(item.settlement_amount))
 
 					const update = {
@@ -176,7 +181,7 @@ const readid = async (req,res,next) => {
 	                    }
 	            },
 	            {   $unwind:"$transaction_detail" },
-	            { 
+	            /*{ 
 	                $lookup: 
 	                    {
 	                        from: 'vendors',
@@ -185,7 +190,7 @@ const readid = async (req,res,next) => {
 	                        as: 'vendor_detail'
 	                    }
 	            },
-	            {   $unwind:"$vendor_detail" },
+	            {   $unwind:"$vendor_detail" },*/
 	            { 
 	                $lookup: 
 	                    {
@@ -199,6 +204,7 @@ const readid = async (req,res,next) => {
 	            {
 	                $project:
 	                    {
+	                    	settlement: "$invoice_detail.settlement",
 	                    	_id: 1,
 	                    	id_customer: 1,
 	                        total_amount: 1,
@@ -208,7 +214,7 @@ const readid = async (req,res,next) => {
 	                        po_ref: "$invoice_detail.po_ref",
 	                        amount: "$invoice_detail.total_amount",
 	                        transaction_code: "$transaction_detail.code",
-	                        vendor_code: "$vendor_detail.code",
+	                        //vendor_code: "$vendor_detail.code",
 	                        type: 1,
 	                        id_code: "$invoice_detail.id_code",
 	                        customer_code : "$customer_detail.code",
@@ -257,7 +263,7 @@ const readid = async (req,res,next) => {
 	                    }
 	            },
 	            {   $unwind:"$transaction_detail" },
-	            { 
+	            /*{ 
 	                $lookup: 
 	                    {
 	                        from: 'vendors',
@@ -266,7 +272,7 @@ const readid = async (req,res,next) => {
 	                        as: 'vendor_detail'
 	                    }
 	            },
-	            {   $unwind:"$vendor_detail" },
+	            {   $unwind:"$vendor_detail" },*/
 	            { 
 	                $lookup: 
 	                    {
@@ -280,6 +286,7 @@ const readid = async (req,res,next) => {
 	            {
 	                $project:
 	                    {
+	                    	settlement: "$invoice_detail.settlement",
 	                    	_id: 1,
 	                    	id_customer: 1,
 	                        total_amount: 1,
@@ -290,7 +297,7 @@ const readid = async (req,res,next) => {
 	                        po_ref: "$invoice_detail.po_ref",
 	                        amount: "$invoice_detail.total_amount",
 	                        transaction_code: "$transaction_detail.code",
-	                        vendor_code: "$vendor_detail.code",
+	                        //vendor_code: "$vendor_detail.code",
 	                        type: 1,
 	                        id_code: "$invoice_detail.id_code",
 	                        customer_code : "$customer_detail.code",
@@ -345,9 +352,62 @@ const cancel = async (req,res,next) => {
     }
 }
 
+const settle = async (req,res,next) => {
+	try{
+
+		const {
+			invoice,
+			type
+		} = req.body
+		await invoice.map(async (item) => {
+			console.log(item._id)
+			console.log(item.id_code)
+			const update = {
+	            settlement: item.settlement
+	        }
+	        if(item.type === 1){
+	        	await InvoiceReg.findOneAndUpdate({id_invoice: mongoose.Types.ObjectId(item._id), id_code: mongoose.Types.ObjectId(item.id_code)}, update, {
+	                new: true,
+	                useFindAndModify: false
+	            });
+	        }else{
+	        	await InvoiceNonreg.findOneAndUpdate({id_invoice: mongoose.Types.ObjectId(item._id), id_code: mongoose.Types.ObjectId(item.id_code)}, update, {
+	                new: true,
+	                useFindAndModify: false
+	            });
+	        }
+	        /*let updateInvoice = await InvoiceReg.findOneAndUpdate({_id: mongoose.Types.ObjectId(id)}, update, {
+                new: true,
+                useFindAndModify: false
+            });*/
+		})
+		/*const id = req.params.id
+		const update = {
+            settlement: true
+        }*/
+        //const invoice = await InvoiceReg.findOne({_id: mongoose.Types.ObjectId(id)})
+
+        /*let updateInvoice = await InvoiceReg.findOneAndUpdate({_id: mongoose.Types.ObjectId(id)}, update, {
+                new: true,
+                useFindAndModify: false
+            });*/
+        return res.status(200).json({
+	            'message': 'Invoice canceled successfully',
+	            //'data': updateTransactioncode
+	        });
+	}catch (error) {
+        console.log(error)
+        return res.status(500).json({
+            'code': 'SERVER_ERROR',
+            'description': 'something went wrong, Please try again'
+        });
+    }
+}
+
 module.exports = {
 	create: create,
 	read: read,
 	readid: readid,
-	cancel: cancel
+	cancel: cancel,
+	settle: settle
 }

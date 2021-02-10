@@ -20,6 +20,7 @@ router.put('/transaction/approving1/:id', validateToken, transaction.approving1)
 router.put('/transaction/approving2/:id', validateToken, transaction.approving2);
 router.put('/transaction/:id', validateToken, transaction.update);
 router.delete('/transaction/:id', validateToken, transaction.remove);
+router.delete('/transaction/reject/:id', validateToken, transaction.reject);
 router.delete('/transaction/cancel/:id', validateToken, transaction.cancel);
 
 module.exports = router;

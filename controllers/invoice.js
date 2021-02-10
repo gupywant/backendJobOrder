@@ -7,6 +7,7 @@ let router = express.Router();
 router.post('/invoice',validateToken, invoice.create);
 router.get('/invoice',validateToken, invoice.read);
 router.get('/invoice/:id',validateToken, invoice.readid);
+router.put('/invoice/settle/',validateToken, invoice.settle);
 router.delete('/invoice/cancel/:id',validateToken, invoice.cancel);
 
 module.exports = router;

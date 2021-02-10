@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const Transaction = require('../../models/transaction');
+const TransactionVendor = require('../../models/transaction_vendor');
 const CustomerService = require('../../models/customer_service');
 const Service = require('../../models/service');
 
@@ -18,25 +19,20 @@ const create = async (req,res,next) => {
             } = req.body;
             temp = {
                 id_code: mongoose.Types.ObjectId(id_code),
+                id_vendor: mongoose.Types.ObjectId(id_vendor)
+            }
+            const isExistsVendor = await TransactionVendor.find(temp)
+            temp = {
+                id_transaction_vendor: mongoose.Types.ObjectId(isExistsVendor[0]._id),
                 id_service: mongoose.Types.ObjectId(id_service)
             }
             const isExists = await Transaction.find(temp)
-            console.log(isExists.length)
+            console.log(isExists)
             if (isExists.length) {
                 return res.status(404).json({
                     'code': 'BAD_REQUEST_ERROR',
                     'description': 'Service already selected'
                 });
-            }else{
-                const temps = {
-                    id_code: id_code,
-                    id_customer: id_customer,
-                    id_service: id_service,
-                    id_vendor: id_vendor,
-                    qty: 0,
-                    planned_amount: 0
-                }
-                let newTransaction = await Transaction.create(temps);
             }
         }else if(req.body.add){
             const {

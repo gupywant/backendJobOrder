@@ -2,13 +2,10 @@ let mongoose = require('mongoose');
 let Schema = mongoose.Schema;
 
 var TransactionSettlement = new Schema({
-    id_code: {
+    id_transaction_vendor: {
         type: mongoose.Schema.ObjectId
     },
     id_service: {
-        type: mongoose.Schema.ObjectId
-    },
-    id_vendor: {
         type: mongoose.Schema.ObjectId
     },
     qty: {
@@ -16,7 +13,7 @@ var TransactionSettlement = new Schema({
         default: 0
     },
     planned_amount: {
-    	type: Number,
+        type: Number,
         default: 0
     }
 }, {

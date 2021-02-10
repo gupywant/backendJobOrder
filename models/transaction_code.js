@@ -8,9 +8,6 @@ var TransactionCode = new Schema({
     id_customer: {
         type: mongoose.Schema.ObjectId
     },
-    id_vendor: {
-      type: mongoose.Schema.ObjectId  
-    },
     cancel: {
     	type: Boolean
     },
